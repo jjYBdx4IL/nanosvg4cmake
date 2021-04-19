@@ -1,0 +1,73 @@
+language:
+  - cpp
+jobs:
+  - os: windows
+    env: CMAKE_GENERATOR="Visual Studio 15 2017 Win64"
+  - os: windows
+    env: CMAKE_GENERATOR="Ninja Multi-Config"
+  - os: osx
+    env: CMAKE_GENERATOR="Xcode"
+    osx_image: xcode12.2
+  - os: linux
+    env: CMAKE_GENERATOR="Ninja Multi-Config"
+    dist: focal
+    addons:
+      apt:
+        packages:
+          - libxrandr-dev
+          - libxinerama-dev
+          - libxcursor-dev
+          - libxi-dev
+          - libglu1-mesa-dev
+          - libgl-dev
+          - freeglut3
+          - freeglut3-dev
+before_install:
+- |-
+    if [ "$TRAVIS_OS_NAME" == "osx" ]; then
+      brew upgrade cmake
+      brew upgrade bash
+      # too many dependencies:
+      # brew install ninja
+      cmake -G
+      cmake --version
+      ninja --version
+      return 0
+    fi
+    case $TRAVIS_OS_NAME in
+      windows)
+        choco upgrade --no-progress -y cmake.install
+        choco upgrade --no-progress -y ninja
+        ;;
+      linux)
+        set -x
+
+        #sudo apt install apt-file
+        #sudo apt-file update
+        #sudo apt-file search include/GL/gl.h
+        #sudo apt-file search include/GL/glu.h
+        #sudo apt-file search libglut.
+
+        sudo apt remove --purge --auto-remove cmake
+        sudo rm -rf /usr/local/bin/cmake /usr/local/bin/ctest /usr/local/cmake*
+        echo $PATH
+        wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc 2>/dev/null | gpg --dearmor - | sudo tee /etc/apt/trusted.gpg.d/kitware.gpg >/dev/null
+        sudo apt-add-repository 'deb https://apt.kitware.com/ubuntu/ focal main'
+        sudo apt update
+        sudo apt install cmake ninja-build
+        which cmake
+        which ninja
+        ninja --version
+        cmake --version
+        cmake -G
+        true
+        ;;
+    esac
+cache:
+  directories:
+    - $HOME/Library/Caches/Homebrew
+before_cache:
+  - brew cleanup
+script:
+  - ./cmake-test/build_and_verify.sh
+  - ./example/rebuild_and_run.sh

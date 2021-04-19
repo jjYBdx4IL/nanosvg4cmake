@@ -26,6 +26,11 @@ build/*
 
 ## Stuff in example
 example/_*
+example/build/*
+example/svg.png
 
 ## xcode specific
 *xcuserdata*
+
+## cmake test
+cmake-test/build/*
